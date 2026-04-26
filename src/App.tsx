@@ -1,8 +1,6 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 
-// We've removed the external 'lucide-react' dependency and embedded the icons directly. 
-// This makes the file 100% plug-and-play with no installations needed!
+// Icons embedded directly
 const Icons = {
   Flame: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>,
   Zap: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
@@ -21,24 +19,35 @@ const Icons = {
 const { Flame, Zap, Youtube, ShoppingCart, Menu, X, ArrowRight, Gamepad2, MonitorPlay, Activity, Swords, Beaker } = Icons;
 
 const App = () => {
-  const [selectedCreator, setSelectedCreator] = useState(null); // 'firesmash' or 'enderman'
+  // Graceful Loading State
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  const [selectedCreator, setSelectedCreator] = useState(null); 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [lightningFlash, setLightningFlash] = useState(false);
   const [mascotVisible, setMascotVisible] = useState(false);
 
-  // Failsafe: Inject Tailwind CSS if the environment doesn't have it set up
+  // Failsafe: Inject Tailwind CSS and wait for it to load
   useEffect(() => {
     if (!document.getElementById('tailwind-cdn')) {
       const script = document.createElement('script');
       script.id = 'tailwind-cdn';
       script.src = 'https://cdn.tailwindcss.com';
+      script.onload = () => {
+        // Add a tiny artificial delay to ensure the browser has painted the styles
+        // and to give the "boot sequence" a cool dramatic effect
+        setTimeout(() => setIsLoaded(true), 600);
+      };
       document.head.appendChild(script);
+    } else {
+      setIsLoaded(true);
     }
   }, []);
 
   // Enderman Lightning Effect
   useEffect(() => {
+    if (!isLoaded) return; // Don't run lightning until site is visible
     let timeoutId;
     const triggerLightning = () => {
       if (selectedCreator === 'enderman' || selectedCreator === null) {
@@ -62,21 +71,20 @@ const App = () => {
     
     triggerLightning();
     return () => clearTimeout(timeoutId);
-  }, [selectedCreator]);
+  }, [selectedCreator, isLoaded]);
 
   // Mascot Easter Egg Trigger
   const triggerEasterEgg = (e) => {
     e.stopPropagation();
     if (!mascotVisible) {
       setMascotVisible(true);
-      // Auto-hide after 3.5 seconds
       setTimeout(() => {
         setMascotVisible(false);
       }, 3500);
     }
   };
 
-  // Direct image link
+  // Direct image link hosted on GitHub
   const plushieImageLink = "/plushie.png";
 
   // --- CREATOR CONFIGURATIONS ---
@@ -127,7 +135,6 @@ const App = () => {
         { id: 4, name: "Void Walker Hoodie", price: "$49.99", desc: "Dark matter fabric. Disappear into the shadows.", color: "from-purple-900 to-black", icon: <Zap className="h-24 w-24" /> },
         { id: 5, name: "Lightning Strike Tee", price: "$24.99", desc: "High voltage graphic on premium dark cotton.", color: "from-indigo-900 to-black", icon: <Activity className="h-24 w-24" /> },
         { id: 6, name: "Teleport Mousepad", price: "$19.99", desc: "Frictionless surface for instant flicks and strikes.", color: "from-cyan-900 to-purple-950", icon: <MonitorPlay className="h-24 w-24" /> },
-        // THE FUNNY IMAGE MERCH ITEM
         { 
           id: 7, 
           name: "SUBJECT 001", 
@@ -175,6 +182,17 @@ const App = () => {
         animation: lava-flow 12s ease infinite reverse;
       }
 
+      .lightning-overlay {
+        position: absolute;
+        inset: 0;
+        background-color: rgba(220, 200, 255, 0.9);
+        pointer-events: none;
+        z-index: 50;
+        opacity: 0;
+        transition: opacity 0.05s ease-out;
+      }
+      .lightning-overlay.active { opacity: 1; }
+
       .split-side { transition: flex 0.5s ease-in-out; }
       @media (min-width: 768px) {
         .split-container:hover .split-side:hover { flex: 1.5; }
@@ -182,6 +200,25 @@ const App = () => {
       }
     `}</style>
   );
+
+  // --- BOOT SEQUENCE LOADING SCREEN ---
+  // This uses raw inline styles so it looks perfect BEFORE Tailwind even loads
+  if (!isLoaded) {
+    return (
+      <div style={{ height: '100vh', width: '100vw', backgroundColor: '#050505', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: 'monospace' }}>
+        <div style={{ fontSize: 'clamp(16px, 4vw, 24px)', marginBottom: '24px', letterSpacing: '4px', color: '#888' }}>INITIALIZING TEAM HUB...</div>
+        <div style={{ width: '250px', height: '2px', backgroundColor: '#222', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '40%', height: '100%', backgroundColor: '#f97316', animation: 'cyber-load 1.2s infinite ease-in-out' }} />
+        </div>
+        <style>{`
+          @keyframes cyber-load {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(300%); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -210,7 +247,7 @@ const App = () => {
 
       {/* --- SPLIT HERO SCREEN (NO CREATOR SELECTED YET) --- */}
       {!selectedCreator ? (
-        <div className="h-screen w-screen bg-black overflow-hidden flex flex-col md:flex-row split-container selection:bg-white selection:text-black relative">
+        <div className="h-screen w-screen bg-black overflow-hidden flex flex-col md:flex-row split-container selection:bg-white selection:text-black relative animate-in fade-in duration-700">
           
           {/* Team Center Badge - CLICK FOR EASTER EGG */}
           <div 
@@ -263,7 +300,12 @@ const App = () => {
         </div>
       ) : (
         // --- CREATOR SPECIFIC VIEW ---
-        <div className={`min-h-screen ${creators[selectedCreator].theme.bg} text-gray-200 font-sans`}>
+        <div className={`min-h-screen ${creators[selectedCreator].theme.bg} text-gray-200 font-sans animate-in fade-in duration-500`}>
+          {/* Global Lightning Flash */}
+          {selectedCreator === 'enderman' && (
+            <div className={`fixed inset-0 pointer-events-none z-[9999] bg-[rgba(220,200,255,0.8)] transition-opacity duration-75 ${lightningFlash ? 'opacity-100' : 'opacity-0'}`}></div>
+          )}
+
           {/* Navigation */}
           <nav className={`fixed w-full z-50 backdrop-blur-md border-b ${creators[selectedCreator].theme.nav}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

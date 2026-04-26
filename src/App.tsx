@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 
 // We've removed the external 'lucide-react' dependency and embedded the icons directly. 

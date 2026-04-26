@@ -77,7 +77,7 @@ const App = () => {
   };
 
   // Direct image link
-  const plushieImageLink = "https://i.imgur.com/9IpxTXL.jpeg";
+  const plushieImageLink = "/plushie.png";
 
   // --- CREATOR CONFIGURATIONS ---
   const creators = {
